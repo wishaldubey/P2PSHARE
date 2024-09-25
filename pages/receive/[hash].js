@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 export default function Receive() {
   const [fileUrl, setFileUrl] = useState(null);
-  const [downloading, setDownloading] = useState(false);
+  const [downloading, setDownloading] = useState(true); // Set downloading to true initially
   const [progress, setProgress] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [fileName, setFileName] = useState(null);
@@ -69,6 +69,7 @@ export default function Receive() {
       const progressPercentage = (downloaded / total) * 100;
       setProgress(progressPercentage);
       setSpeed(torrent.downloadSpeed / 1024); // Speed in KB/s
+      setDownloading(true); // Set downloading to true when download starts
     });
 
     torrent.on('done', () => {
@@ -111,13 +112,16 @@ export default function Receive() {
         <p className="text-lg mb-4">{connectionStatus}</p>
       )}
 
-      {downloading && (
+      {/* Show progress bar only when downloading is in progress */}
+      {downloading && !fileUrl && (
         <>
           <p className="text-lg">Downloading file, please wait...</p>
           <div className="w-2/3 h-4 bg-gray-300 rounded-full mt-4">
             <div
               className="bg-blue-500 h-full rounded-full"
-              style={{ width: `${progress}%` }}
+              style={{
+                width: `${progress}%`
+              }}
             />
           </div>
           <p className="mt-2 text-center">{progress.toFixed(2)}% downloaded</p>
