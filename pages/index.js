@@ -1,145 +1,90 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
+import WebTorrent from 'webtorrent';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function Home() {
-  const [file, setFile] = useState(null);
-  const [fileLink, setFileLink] = useState('');
-  const [seeding, setSeeding] = useState(false);
+  const [torrentId, setTorrentId] = useState(null);
   const [progress, setProgress] = useState(0);
   const [speed, setSpeed] = useState(0);
+  const [fileName, setFileName] = useState('');
   const clientRef = useRef(null);
+  const inputRef = useRef(null);
 
-  useEffect(() => {
-    const loadWebTorrent = () => {
-      if (window.WebTorrent) {
-        clientRef.current = new window.WebTorrent();
-      } else {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js';
-        script.async = true;
-        script.onload = () => {
-          clientRef.current = new window.WebTorrent();
-        };
-        document.body.appendChild(script);
-      }
-    };
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    loadWebTorrent();
+    const client = new WebTorrent();
+    clientRef.current = client;
 
-    return () => {
-      if (clientRef.current) {
-        clientRef.current.destroy();
-      }
-    };
-  }, []);
+    const torrent = client.seed(file, (torrent) => {
+      setTorrentId(torrent.magnetURI);
+    });
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      createTorrent(selectedFile);
-    }
-  };
+    torrent.on('upload', () => {
+      const uploaded = torrent.uploaded;
+      const total = torrent.length;
+      setProgress((uploaded / total) * 100);
+      setSpeed(torrent.uploadSpeed / 1024); // Speed in KB/s
+      setFileName(torrent.files[0].name);
+    });
 
-  const createTorrent = (file) => {
-    const client = clientRef.current;
-    if (!client) return;
-
-    const uniqueHash = uuidv4(); // Unique hash for file sharing
-    setSeeding(true);
-
-    client.seed(file, { announce: [
-      'wss://tracker.openwebtorrent.com',
-      'wss://tracker.btorrent.xyz',
-      'wss://tracker.fastcast.nz',
-      'wss://tracker.webtorrent.io',
-      'wss://tracker.sloppyta.co',
-      'wss://tracker.novage.com.ua'
-    ]}, (torrent) => {
-      const link = `${window.location.origin}/receive/${torrent.infoHash}`;
-      setFileLink(link);
-
-      torrent.on('upload', () => {
-        const total = torrent.length;
-        const uploaded = torrent.uploaded;
-        const progressPercentage = (uploaded / total) * 100;
-        setProgress(progressPercentage);
-        setSpeed(torrent.uploadSpeed / 1024); // Speed in KB/s
-      });
-
-      torrent.on('done', () => {
-        setSeeding(false);
-      });
+    torrent.on('done', () => {
+      console.log('File sharing done!');
     });
   };
 
-  // Function to copy link to clipboard
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(fileLink);
-    alert("Link copied to clipboard!");
+    if (!torrentId) return;
+    navigator.clipboard.writeText(`${window.location.href}receive/${torrentId}`);
+    // Inform user that the link was copied, without using an alert
+    const infoBox = document.getElementById('copy-info');
+    infoBox.classList.remove('hidden');
+    setTimeout(() => {
+      infoBox.classList.add('hidden');
+    }, 2000);
   };
 
   const handleCloseConnection = () => {
     if (clientRef.current) {
-      clientRef.current.destroy(); // Close WebTorrent connection
-      window.location.reload(); // Refresh the page
+      clientRef.current.destroy();
+      window.location.reload(); // Redirect back to the index page
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
-      <h1 className="text-4xl font-bold mb-4">P2P File Share</h1>
-      <input
-        type="file"
-        onChange={handleFileChange}
-        className="mb-4"
-      />
-
-      {fileLink && (
-        <div className="flex flex-col items-center">
-          <p className="text-lg mb-4">Share this link to receive the file:</p>
-          <div className="break-all bg-gray-800 p-2 rounded-md">
-            <a
-              href={fileLink}
-              target="_blank"
-              className="text-blue-400 hover:underline"
-            >
-              {fileLink}
-            </a>
+      <h1 className="text-4xl font-bold mb-4">P2P File Sharing</h1>
+      <input type="file" ref={inputRef} onChange={handleFileSelect} className="mb-4" />
+      {torrentId && (
+        <>
+          <div className="mb-2">
+            <span className="bg-gray-700 px-4 py-2 rounded">
+              {fileName.length > 20 ? `${fileName.slice(0, 20)}...` : fileName}
+            </span>
           </div>
+          <div className="w-2/3 h-4 bg-gray-300 rounded-full mt-2 mb-4">
+            <div className="bg-blue-500 h-full rounded-full" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="text-center mb-4">{progress.toFixed(2)}% uploaded</p>
+          <p className="text-center mb-4">Speed: {speed.toFixed(2)} KB/s</p>
           <button
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
             onClick={copyToClipboard}
-            className="bg-green-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-green-600"
           >
             Copy Link
           </button>
-        </div>
-      )}
-
-      {seeding && (
-        <div className="flex flex-col items-center mt-4">
-          <p className="text-lg">Seeding file, please wait...</p>
-          <div className="w-2/3 h-4 bg-gray-300 rounded-full mt-4">
-            <div
-              className="bg-green-500 h-full rounded-full"
-              style={{ width: `${progress}%` }}
-            />
+          <div id="copy-info" className="hidden text-green-500 mt-2">
+            Link copied to clipboard!
           </div>
-          <p className="mt-2 text-center">{progress.toFixed(2)}% uploaded</p>
-          <p className="mt-2 text-center">Speed: {speed.toFixed(2)} KB/s</p>
-        </div>
-      )}
-
-      {fileLink && !seeding && (
-        <button
-          onClick={handleCloseConnection}
-          className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
-        >
-          Close Connection
-        </button>
+          <button
+            className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
+            onClick={handleCloseConnection}
+          >
+            Close Connection
+          </button>
+        </>
       )}
     </div>
   );
 }
-
-  
