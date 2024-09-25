@@ -130,6 +130,6 @@ export default function Receive() {
           </button>
         )}
       </div>
-    </div>
+    
   );
 }
