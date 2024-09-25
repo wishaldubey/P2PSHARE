@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 
@@ -15,8 +14,10 @@ export default function Receive() {
 
   useEffect(() => {
     const loadWebTorrent = () => {
+      // Ensure WebTorrent is loaded and initialize client
       if (window.WebTorrent) {
         clientRef.current = new window.WebTorrent();
+        initiateTorrentDownload();
       } else {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js';
@@ -36,57 +37,63 @@ export default function Receive() {
         clientRef.current.destroy();
       }
     };
-  }, []);
+  }, [hash]); // Ensure this effect runs when the hash changes
 
   const initiateTorrentDownload = () => {
-    if (hash && clientRef.current) {
-      const client = clientRef.current;
-      const newTorrent = client.add(hash, {
-        announce: [
-          'wss://tracker.openwebtorrent.com',
-          'wss://tracker.btorrent.xyz',
-          'wss://tracker.fastcast.nz',
-          'wss://tracker.webtorrent.io',
-          'wss://tracker.sloppyta.co',
-          'wss://tracker.novage.com.ua'
-        ]
-      });
+    if (!hash || !clientRef.current) return;
 
-      setConnectionStatus('Connecting to peers...');
-      setDownloading(true);
+    const client = clientRef.current;
+    const torrent = client.add(hash, {
+      announce: [
+        'wss://tracker.openwebtorrent.com',
+        'wss://tracker.btorrent.xyz',
+        'wss://tracker.fastcast.nz',
+        'wss://tracker.webtorrent.io',
+        'wss://tracker.sloppyta.co',
+        'wss://tracker.novage.com.ua'
+      ]
+    });
 
-      newTorrent.on('metadata', () => {
-        setFileName(newTorrent.files[0].name);
-        setConnectionStatus(null); // Remove the "Receiving File..." text once connected
-      });
+    setConnectionStatus('Connecting to peers...');
 
-      newTorrent.on('download', () => {
-        const total = newTorrent.length;
-        const downloaded = newTorrent.downloaded;
-        const progressPercentage = (downloaded / total) * 100;
-        setProgress(progressPercentage);
-        setSpeed(newTorrent.downloadSpeed / 1024);
-      });
+    torrent.on('metadata', () => {
+      // Set file name as soon as metadata is available
+      setFileName(torrent.files[0].name);
+      setConnectionStatus(null); // Remove connection status once peers are found
+    });
 
-      newTorrent.on('done', () => {
-        const file = newTorrent.files[0];
-        file.getBlobURL((err, url) => {
-          if (err) {
-            console.error('Error getting blob URL:', err);
-            setDownloading(false);
-            return;
-          }
-          setFileUrl(url);
+    torrent.on('download', (bytes) => {
+      // Handle download progress
+      const total = torrent.length;
+      const downloaded = torrent.downloaded;
+      const progressPercentage = (downloaded / total) * 100;
+      setProgress(progressPercentage);
+      setSpeed(torrent.downloadSpeed / 1024); // Speed in KB/s
+    });
+
+    torrent.on('done', () => {
+      const file = torrent.files[0];
+      file.getBlobURL((err, url) => {
+        if (err) {
+          console.error('Error getting blob URL:', err);
           setDownloading(false);
-        });
+          return;
+        }
+        setFileUrl(url);
+        setDownloading(false);
       });
-    }
+    });
+
+    torrent.on('error', (err) => {
+      console.error('Torrent error:', err);
+      setConnectionStatus('Failed to connect. Please try again.');
+    });
   };
 
   const handleCloseConnection = () => {
     if (clientRef.current) {
-      clientRef.current.destroy();
-      router.push('/');
+      clientRef.current.destroy(); // Close the WebTorrent client
+      router.push('/'); // Redirect to the home page after closing connection
     }
   };
 
@@ -110,8 +117,7 @@ export default function Receive() {
           <div className="w-2/3 h-4 bg-gray-300 rounded-full mt-4">
             <div
               className="bg-blue-500 h-full rounded-full"
-              style={{                 width: `${progress}%`
-              }}
+              style={{ width: `${progress}%` }}
             />
           </div>
           <p className="mt-2 text-center">{progress.toFixed(2)}% downloaded</p>
@@ -140,4 +146,3 @@ export default function Receive() {
     </div>
   );
 }
-
