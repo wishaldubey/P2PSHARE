@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/router';
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/router";
 
 export default function Receive() {
   const [fileUrl, setFileUrl] = useState(null);
@@ -11,8 +11,10 @@ export default function Receive() {
   const { hash } = router.query;
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js';
+    // Load WebTorrent
+    const script = document.createElement("script");
+    script.src =
+      "https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js";
     script.async = true;
     script.onload = () => {
       clientRef.current = new window.WebTorrent();
@@ -25,19 +27,26 @@ export default function Receive() {
   }, []);
 
   useEffect(() => {
+    console.log("Hash received:", hash);
+
+    // Ensure the client is initialized
     if (hash && clientRef.current) {
       const client = clientRef.current;
+
+      // Create a new torrent from the hash
       const newTorrent = client.add(hash, {
         announce: [
-          'wss://tracker.openwebtorrent.com',
-          'wss://tracker.btorrent.xyz',
-          'wss://tracker.fastcast.nz'
-        ]
+          "wss://tracker.openwebtorrent.com",
+          "wss://tracker.btorrent.xyz",
+          "wss://tracker.uwot.me",
+          "wss://tracker.fastcast.nz",
+        ],
       });
 
-      setTorrent(newTorrent); // Set the torrent object in state
+      setTorrent(newTorrent);
 
-      newTorrent.on('download', (bytes) => {
+      // Handle download progress
+      newTorrent.on("download", (bytes) => {
         const total = newTorrent.length;
         const downloaded = newTorrent.downloaded;
         const progressPercentage = (downloaded / total) * 100;
@@ -45,11 +54,12 @@ export default function Receive() {
         setDownloading(true);
       });
 
-      newTorrent.on('done', () => {
+      // Handle when the download is complete
+      newTorrent.on("done", () => {
         const file = newTorrent.files[0];
         file.getBlobURL((err, url) => {
           if (err) {
-            console.error('Error getting blob URL:', err);
+            console.error("Error getting blob URL:", err);
             return;
           }
           setFileUrl(url);
@@ -58,10 +68,13 @@ export default function Receive() {
       });
 
       return () => {
-        client.remove(hash); // Clean up the client when the component unmounts
+        client.remove(hash); // Clean up the client on unmount
       };
     } else {
-      console.error('No hash or client available.', { hash, client: clientRef.current });
+      console.error("No hash or client available.", {
+        hash,
+        client: clientRef.current,
+      });
     }
   }, [hash]);
 
@@ -82,7 +95,9 @@ export default function Receive() {
       )}
       {fileUrl && torrent && (
         <div className="mt-4 text-center">
-          <p className="text-lg mb-2">Download complete! Click the link below:</p>
+          <p className="text-lg mb-2">
+            Download complete! Click the link below:
+          </p>
           <a
             href={fileUrl}
             download={torrent.files[0].name}
@@ -95,5 +110,3 @@ export default function Receive() {
     </div>
   );
 }
-
-
