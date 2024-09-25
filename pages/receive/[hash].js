@@ -6,7 +6,7 @@ export default function Receive() {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0); // Progress state
   const [torrent, setTorrent] = useState(null); // Store torrent object
-  const [speed, setSpeed] = useState(0); // Speed in bytes/sec
+  const [speed, setSpeed] = useState(0); // Speed in KB/sec
   const [fileName, setFileName] = useState(null); // Filename
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
   const clientRef = useRef(null);
@@ -15,31 +15,45 @@ export default function Receive() {
 
   // Initialize WebTorrent client
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js';
-    script.async = true;
-    script.onload = () => {
-      clientRef.current = new window.WebTorrent();
+    const loadWebTorrent = () => {
+      if (window.WebTorrent) {
+        clientRef.current = new window.WebTorrent();
+      } else {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js';
+        script.async = true;
+        script.onload = () => {
+          clientRef.current = new window.WebTorrent();
+          initiateTorrentDownload(); // Start torrent download after script load
+        };
+        document.body.appendChild(script);
+      }
     };
-    document.body.appendChild(script);
+
+    loadWebTorrent();
 
     return () => {
-      document.body.removeChild(script);
+      if (clientRef.current) {
+        clientRef.current.destroy();
+      }
     };
   }, []);
 
-  // Start torrent download when the hash is available
-  useEffect(() => {
+  // Function to initiate torrent download
+  const initiateTorrentDownload = () => {
     if (hash && clientRef.current) {
       const client = clientRef.current;
       const newTorrent = client.add(hash, {
         announce: [
           'wss://tracker.openwebtorrent.com',
           'wss://tracker.btorrent.xyz',
-          'wss://tracker.fastcast.nz'
+          'wss://tracker.fastcast.nz',
+          'wss://tracker.webtorrent.io',
+          'wss://tracker.sloppyta.co',
+          'wss://tracker.novage.com.ua'
         ]
       });
-      
+
       setTorrent(newTorrent);
       setDownloading(true);
       setConnectionStatus('Connecting to peers...');
@@ -51,13 +65,13 @@ export default function Receive() {
       });
 
       // Listen for progress updates
-      newTorrent.on('download', (bytes) => {
+      newTorrent.on('download', () => {
         const total = newTorrent.length;
         const downloaded = newTorrent.downloaded;
         const progressPercentage = (downloaded / total) * 100;
         setProgress(progressPercentage);
 
-        // Get download speed in kilobytes/sec
+        // Get download speed in KB/s
         setSpeed(newTorrent.downloadSpeed / 1024);
       });
 
@@ -74,22 +88,23 @@ export default function Receive() {
           setDownloading(false);
         });
       });
-
-      return () => {
-        client.remove(hash); // Clean up the client when the component unmounts
-      };
     } else {
       console.error('No hash or client available.');
     }
-  }, [hash]);
+  };
+
+  // Retry connecting after WebTorrent client is loaded
+  useEffect(() => {
+    if (clientRef.current && hash) {
+      initiateTorrentDownload();
+    }
+  }, [clientRef.current, hash]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
       <h1 className="text-4xl font-bold mb-4">Receiving File</h1>
       {fileName && <p className="text-lg mb-4">File: {fileName}</p>}
-      {connectionStatus && (
-        <p className="text-lg mb-4">{connectionStatus}</p>
-      )}
+      {connectionStatus && <p className="text-lg mb-4">{connectionStatus}</p>}
 
       {downloading && (
         <>
@@ -119,4 +134,4 @@ export default function Receive() {
       )}
     </div>
   );
-        }
+}
