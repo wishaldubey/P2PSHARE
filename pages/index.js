@@ -4,10 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 export default function Home() {
   const [file, setFile] = useState(null);
   const [fileLink, setFileLink] = useState('');
-  const [seeding, setSeeding] = useState(false); // To track if the file is being seeded
-  const [progress, setProgress] = useState(0); // Progress for seeding
-  const [speed, setSpeed] = useState(0); // Upload speed
-  const clientRef = useRef(null); // WebTorrent client
+  const [seeding, setSeeding] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [speed, setSpeed] = useState(0);
+  const clientRef = useRef(null);
 
   useEffect(() => {
     const loadWebTorrent = () => {
@@ -46,7 +46,7 @@ export default function Home() {
     if (!client) return;
 
     const uniqueHash = uuidv4(); // Unique hash for file sharing
-    setSeeding(true); // Start seeding
+    setSeeding(true);
 
     client.seed(file, { announce: [
       'wss://tracker.openwebtorrent.com',
@@ -57,9 +57,8 @@ export default function Home() {
       'wss://tracker.novage.com.ua'
     ]}, (torrent) => {
       const link = `${window.location.origin}/receive/${torrent.infoHash}`;
-      setFileLink(link); // Set the link for sharing
+      setFileLink(link);
 
-      // Track progress and speed of seeding
       torrent.on('upload', () => {
         const total = torrent.length;
         const uploaded = torrent.uploaded;
@@ -70,13 +69,25 @@ export default function Home() {
 
       torrent.on('done', () => {
         setSeeding(false);
-        console.log('Seeding complete');
       });
     });
   };
 
+  // Function to copy link to clipboard
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(fileLink);
+    alert("Link copied to clipboard!");
+  };
+
+  const handleCloseConnection = () => {
+    if (clientRef.current) {
+      clientRef.current.destroy(); // Close WebTorrent connection
+      window.location.reload(); // Refresh the page
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
+    <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
       <h1 className="text-4xl font-bold mb-4">P2P File Share</h1>
       <input
         type="file"
@@ -87,15 +98,21 @@ export default function Home() {
       {fileLink && (
         <div className="flex flex-col items-center">
           <p className="text-lg mb-4">Share this link to receive the file:</p>
-          <div className="break-all bg-gray-200 p-2 rounded-md dark:bg-gray-800">
+          <div className="break-all bg-gray-800 p-2 rounded-md">
             <a
               href={fileLink}
               target="_blank"
-              className="text-blue-500 hover:underline"
+              className="text-blue-400 hover:underline"
             >
               {fileLink}
             </a>
           </div>
+          <button
+            onClick={copyToClipboard}
+            className="bg-green-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-green-600"
+          >
+            Copy Link
+          </button>
         </div>
       )}
 
@@ -112,6 +129,17 @@ export default function Home() {
           <p className="mt-2 text-center">Speed: {speed.toFixed(2)} KB/s</p>
         </div>
       )}
+
+      {fileLink && !seeding && (
+        <button
+          onClick={handleCloseConnection}
+          className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
+        >
+          Close Connection
+        </button>
+      )}
     </div>
   );
 }
+
+  
