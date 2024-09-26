@@ -142,6 +142,7 @@ export default function Receive() {
         </a>
       )}
 
+      {/* Show Close Connection button only when downloading is complete */}
       {!downloading && fileUrl && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
@@ -156,4 +157,4 @@ export default function Receive() {
       )}
     </div>
   );
-          }
+}
