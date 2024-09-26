@@ -14,6 +14,7 @@ export default function Receive() {
   const { hash } = router.query;
 
   useEffect(() => {
+    if (!hash) return; // Early return if hash is not available
     const loadWebTorrent = () => {
       if (window.WebTorrent) {
         clientRef.current = new window.WebTorrent();
@@ -95,7 +96,12 @@ export default function Receive() {
       setConnectionClosed(true);
 
       // Notify the server to close the sender connection
-      await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });
+      try {
+        await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });
+        await fetch(`/api/notify-sender-to-close?hash=${hash}`, { method: 'POST' });
+      } catch (error) {
+        console.error('Error closing connection:', error);
+      }
 
       // Redirect to home page immediately after closing connection
       router.push('/');
@@ -155,4 +161,4 @@ export default function Receive() {
       )}
     </div>
   );
-        }
+    }
