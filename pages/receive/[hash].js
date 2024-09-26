@@ -35,9 +35,7 @@ export default function Receive() {
     loadWebTorrent();
 
     return () => {
-      if (clientRef.current) {
-        clientRef.current.destroy();
-      }
+      // No need to destroy the client here.
     };
   }, [hash]);
 
@@ -91,10 +89,7 @@ export default function Receive() {
   };
 
   const handleCloseConnection = () => {
-    if (clientRef.current) {
-      clientRef.current.destroy(); // Clean up the client
-    }
-    setConnectionClosed(true);
+    // Simply redirect without destroying the client
     router.push('https://wishare.vercel.app'); // Redirect to the homepage
   };
 
