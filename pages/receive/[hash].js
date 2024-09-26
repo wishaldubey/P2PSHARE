@@ -13,6 +13,9 @@ export default function Receive() {
   const router = useRouter();
   const { hash } = router.query;
 
+  // Replace this with the path to your GIF or the URL
+  const amongUsGif = '/path/to/among-us.gif'; // Replace with your GIF path
+
   useEffect(() => {
     if (!hash) return;
 
@@ -90,7 +93,6 @@ export default function Receive() {
 
   const handleCloseConnection = async () => {
     try {
-      // Notify the sender to close the connection
       await fetch('/api/notify-sender-to-close', {
         method: 'POST',
         headers: {
@@ -98,8 +100,7 @@ export default function Receive() {
         },
         body: JSON.stringify({ hash }),
       });
-      // Redirect receiver to the homepage
-      router.push('https://vishare.vercel.app'); // Redirect to the homepage
+      router.push('https://vishare.vercel.app');
     } catch (error) {
       console.error('Error notifying sender:', error);
     }
@@ -122,7 +123,18 @@ export default function Receive() {
       {downloading && !fileUrl && !connectionClosed && (
         <>
           <p className="text-lg">Downloading file, please wait...</p>
-          <div className="w-2/3 h-4 bg-gray-300 rounded-full mt-4">
+          <div className="relative w-2/3 h-4 bg-gray-300 rounded-full mt-4">
+            <img
+              src={amongUsGif}
+              alt="Among Us Character"
+              className="absolute"
+              style={{
+                left: `${progress}%`,
+                transform: 'translate(-50%, -50%)', // Center the GIF
+                width: '20px', // Adjust size as needed
+                height: '20px', // Adjust size as needed
+              }}
+            />
             <div
               className="bg-blue-500 h-full rounded-full"
               style={{ width: `${progress}%` }}
@@ -143,7 +155,6 @@ export default function Receive() {
         </a>
       )}
 
-      {/* Show close connection button as soon as connection is established/downloading starts */}
       {(downloading || connectionStatus) && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
@@ -158,4 +169,4 @@ export default function Receive() {
       )}
     </div>
   );
-}
+      }
