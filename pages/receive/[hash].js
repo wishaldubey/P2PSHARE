@@ -91,15 +91,17 @@ export default function Receive() {
 
   const handleCloseConnection = async () => {
     if (clientRef.current) {
+      clientRef.current.destroy(); // Close the WebTorrent client
+      setConnectionClosed(true);
+
       try {
         await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' }); // Notify the server to close sender connection
-        clientRef.current.destroy(); // Close the WebTorrent client
-        setConnectionClosed(true);
         setTimeout(() => {
           router.push('/'); // Redirect to home page after a delay to ensure closure
         }, 2000);
       } catch (error) {
         console.error('Error closing connection:', error);
+        setConnectionStatus('Error closing connection. Please try again.'); // Optional feedback to user
       }
     }
   };
@@ -156,4 +158,4 @@ export default function Receive() {
       )}
     </div>
   );
-            }
+}
