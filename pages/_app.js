@@ -18,15 +18,7 @@ function MyApp({ Component, pageProps }) {
   };
 
   return (
-    <div>
-      <button
-        onClick={toggleTheme}
-        className="fixed top-5 right-5 bg-gray-200 dark:bg-gray-700 p-2 rounded-md transition-colors"
-      >
-        Toggle Theme
-      </button>
-      <Component {...pageProps} />
-    </div>
+   
   );
 }
 
