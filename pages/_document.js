@@ -19,7 +19,7 @@ export default function Document() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="ViShare - Secure P2P File Sharing" />
         <meta name="twitter:description" content="Share files directly between devices via secure peer-to-peer connections." />
-        <meta name="twitter:image" content="https://vishare.vercel.app/preview-image.png" /> {/* Replace with your image URL */}
+        <meta name="twitter:image" content="https://vishare.vercel.app/favicon.ico" /> {/* Replace with your image URL */}
 
       </Head>
       <body className="bg-gray-900 text-white">
