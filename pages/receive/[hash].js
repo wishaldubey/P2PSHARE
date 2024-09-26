@@ -91,17 +91,15 @@ export default function Receive() {
 
   const handleCloseConnection = async () => {
     if (clientRef.current) {
-      clientRef.current.destroy(); // Close the WebTorrent client
-      setConnectionClosed(true);
-
       try {
+        clientRef.current.destroy(); // Close the WebTorrent client
+        setConnectionClosed(true);
         await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' }); // Notify the server to close sender connection
-        setTimeout(() => {
-          router.push('/'); // Redirect to home page after a delay to ensure closure
-        }, 2000);
       } catch (error) {
         console.error('Error closing connection:', error);
-        setConnectionStatus('Error closing connection. Please try again.'); // Optional feedback to user
+      } finally {
+        // Redirect to the home page after the connection has been attempted to be closed
+        router.push('https://wishare.vercel.app'); 
       }
     }
   };
@@ -158,4 +156,4 @@ export default function Receive() {
       )}
     </div>
   );
-}
+          }
