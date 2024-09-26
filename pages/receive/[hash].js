@@ -9,7 +9,7 @@ export default function Receive() {
   const [fileName, setFileName] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
   const [connectionClosed, setConnectionClosed] = useState(false);
-  const [isClosing, setIsClosing] = useState(false); // New state to track closing status
+  const [isClosing, setIsClosing] = useState(false); // State to track closing status
   const clientRef = useRef(null);
   const router = useRouter();
   const { hash } = router.query;
@@ -70,6 +70,7 @@ export default function Receive() {
       setProgress(progressPercentage);
       setSpeed(torrent.downloadSpeed / 1024);
       setDownloading(true);
+      console.log(`Downloading: ${progressPercentage.toFixed(2)}% at ${speed.toFixed(2)} KB/s`); // Debug log
     });
 
     torrent.on('done', () => {
@@ -82,6 +83,7 @@ export default function Receive() {
         }
         setFileUrl(url);
         setDownloading(false);
+        console.log('Download complete:', url); // Debug log
       });
     });
 
@@ -144,7 +146,8 @@ export default function Receive() {
         </a>
       )}
 
-      {!downloading && fileUrl && !connectionClosed && (
+      {/* Close Connection Button Logic */}
+      {(!downloading && fileUrl) && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
           className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
