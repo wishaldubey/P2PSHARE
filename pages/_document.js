@@ -13,7 +13,7 @@ export default function Document() {
         <meta property="og:description" content="Easily share files directly between devices without storing them on a server." />
         <meta property="og:url" content="https://vishare.vercel.app" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://vishare.vercel.app/preview-image.png" /> {/* Replace with your image URL */}
+        <meta property="og:image" content="https://vishare.vercel.app/favicon.ico" /> {/* Replace with your image URL */}
         
         {/* Twitter Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
