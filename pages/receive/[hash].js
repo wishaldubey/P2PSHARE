@@ -68,6 +68,8 @@ export default function Receive() {
       setProgress(progressPercentage);
       setSpeed(torrent.downloadSpeed / 1024);
       setDownloading(true);
+
+      console.log('Downloading:', { downloaded, total, progressPercentage });
     });
 
     torrent.on('done', () => {
@@ -79,7 +81,8 @@ export default function Receive() {
           return;
         }
         setFileUrl(url);
-        setDownloading(false);
+        setDownloading(false); // Set downloading to false once done
+        console.log('Download complete:', url);
       });
     });
 
@@ -91,16 +94,19 @@ export default function Receive() {
 
   const handleCloseConnection = async () => {
     if (clientRef.current) {
-      try {
-        clientRef.current.destroy(); // Close the WebTorrent client
-        setConnectionClosed(true);
-        await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' }); // Notify the server to close sender connection
-      } catch (error) {
-        console.error('Error closing connection:', error);
-      } finally {
-        // Redirect to the home page after the connection has been attempted to be closed
-        router.push('https://wishare.vercel.app'); 
-      }
+      clientRef.current.destroy(); // Close the WebTorrent client
+      setConnectionClosed(true);
+
+      // Notify the server to close the sender connection
+      await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });
+
+      // Additionally notify the sender to close the connection
+      await fetch(`/api/notify-sender-to-close?hash=${hash}`, { method: 'POST' });
+
+      // Redirect to home page after a delay
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
     }
   };
 
@@ -142,7 +148,7 @@ export default function Receive() {
         </a>
       )}
 
-      {/* Show Close Connection button only when downloading is complete */}
+      {/* Ensure the Close Connection button is visible when not downloading and fileUrl is available */}
       {!downloading && fileUrl && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
