@@ -8,6 +8,7 @@ export default function Receive() {
   const [speed, setSpeed] = useState(0);
   const [fileName, setFileName] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
+  const [connectionClosed, setConnectionClosed] = useState(false); // New state
   const clientRef = useRef(null);
   const router = useRouter();
   const { hash } = router.query;
@@ -49,20 +50,23 @@ export default function Receive() {
         'wss://tracker.fastcast.nz',
         'wss://tracker.webtorrent.io',
         'wss://tracker.sloppyta.co',
-        'wss://tracker.novage.com.ua'
+        'wss://tracker.novage.com.ua',
       ]
     });
+
+    setConnectionStatus('Connecting to peers...');
 
     torrent.on('metadata', () => {
       setFileName(torrent.files[0].name);
       setConnectionStatus(null);
     });
 
-    torrent.on('download', () => {
+    torrent.on('download', (bytes) => {
       const total = torrent.length;
       const downloaded = torrent.downloaded;
-      setProgress((downloaded / total) * 100);
-      setSpeed(torrent.downloadSpeed / 1024); // Speed in KB/s
+      const progressPercentage = (downloaded / total) * 100;
+      setProgress(progressPercentage);
+      setSpeed(torrent.downloadSpeed / 1024);
       setDownloading(true);
     });
 
@@ -70,6 +74,7 @@ export default function Receive() {
       const file = torrent.files[0];
       file.getBlobURL((err, url) => {
         if (err) {
+          console.error('Error getting blob URL:', err);
           setDownloading(false);
           return;
         }
@@ -78,28 +83,35 @@ export default function Receive() {
       });
     });
 
-    torrent.on('error', () => {
+    torrent.on('error', (err) => {
+      console.error('Torrent error:', err);
       setConnectionStatus('Failed to connect. Please try again.');
     });
   };
 
   const handleCloseConnection = () => {
     if (clientRef.current) {
-      clientRef.current.destroy();
-      router.push('/');
+      clientRef.current.destroy(); // Close the WebTorrent client
+      setConnectionClosed(true);
+      router.push('/'); // Redirect to home page
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
       <h1 className="text-4xl font-bold mb-4">Receiving File</h1>
+
       {fileName && (
         <p className="text-lg mb-4">
-          File: {fileName.length > 20 ? `${fileName.slice(0, 20)}...` : fileName}
+          File: {fileName.length > 15 ? `${fileName.slice(0, 15)}...` : fileName}
         </p>
       )}
-      {connectionStatus && <p className="text-lg mb-4">{connectionStatus}</p>}
-      {downloading && !fileUrl && (
+
+      {connectionStatus && !connectionClosed && (
+        <p className="text-lg mb-4">{connectionStatus}</p>
+      )}
+
+      {downloading && !fileUrl && !connectionClosed && (
         <>
           <p className="text-lg">Downloading file, please wait...</p>
           <div className="w-2/3 h-4 bg-gray-300 rounded-full mt-4">
@@ -112,24 +124,29 @@ export default function Receive() {
           <p className="mt-2 text-center">Speed: {speed.toFixed(2)} KB/s</p>
         </>
       )}
-      {fileUrl && (
+
+      {fileUrl && !connectionClosed && (
         <a
           href={fileUrl}
           download={fileName}
           className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mt-4"
         >
-          Download {fileName.length > 20 ? `${fileName.slice(0, 20)}...` : fileName}
+          Download {fileName.length > 15 ? `${fileName.slice(0, 15)}...` : fileName}
         </a>
       )}
-      {fileUrl && (
+
+      {!downloading && fileUrl && !connectionClosed && (
         <button
-            onClick={handleCloseConnection}
-            className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
-          >
-            Close Connection
-          </button>
-        )}
-      </div>
-    
+          onClick={handleCloseConnection}
+          className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
+        >
+          Close Connection
+        </button>
+      )}
+
+      {connectionClosed && (
+        <p className="mt-4 text-center text-red-400">Connection closed. Redirecting...</p>
+      )}
+    </div>
   );
 }
