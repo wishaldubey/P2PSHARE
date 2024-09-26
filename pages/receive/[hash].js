@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 export default function Receive() {
   const [fileUrl, setFileUrl] = useState(null);
-  const [downloading, setDownloading] = useState(true);
+  const [downloading, setDownloading] = useState(false); // Initially false, updated when connection starts
   const [progress, setProgress] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [fileName, setFileName] = useState(null);
@@ -67,7 +67,7 @@ export default function Receive() {
       const progressPercentage = (downloaded / total) * 100;
       setProgress(progressPercentage);
       setSpeed(torrent.downloadSpeed / 1024);
-      setDownloading(true);
+      setDownloading(true); // Set downloading to true when download starts
     });
 
     torrent.on('done', () => {
@@ -97,13 +97,8 @@ export default function Receive() {
       // Notify the server to close the sender connection
       await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });
 
-      // Additionally notify the sender to close the connection
-      await fetch(`/api/notify-sender-to-close?hash=${hash}`, { method: 'POST' });
-
-      // Redirect to home page after a delay
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      // Redirect to home page immediately after closing connection
+      router.push('/');
     }
   };
 
@@ -145,8 +140,8 @@ export default function Receive() {
         </a>
       )}
 
-      {/* Ensure the Close Connection button is visible when not downloading and fileUrl is available */}
-      {fileUrl && !downloading && !connectionClosed && (
+      {/* Show Close Connection button immediately after starting to download */}
+      {downloading && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
           className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
@@ -160,4 +155,4 @@ export default function Receive() {
       )}
     </div>
   );
-}
+        }
