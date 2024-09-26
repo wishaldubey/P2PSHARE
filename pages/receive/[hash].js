@@ -15,7 +15,7 @@ export default function Receive() {
 
   useEffect(() => {
     if (!hash) return;
-    
+
     const loadWebTorrent = () => {
       if (window.WebTorrent) {
         clientRef.current = new window.WebTorrent();
@@ -48,7 +48,7 @@ export default function Receive() {
     const torrent = client.add(hash, {
       announce: [
         'wss://tracker.openwebtorrent.com',
-        'wss://tracker.btorrent.xyz', // Consider removing if problematic
+        // Consider changing these if issues persist
         'wss://tracker.fastcast.nz',
         'wss://tracker.webtorrent.io',
         'wss://tracker.sloppyta.co',
@@ -96,12 +96,11 @@ export default function Receive() {
       try {
         await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });
         await fetch(`/api/notify-sender-to-close?hash=${hash}`, { method: 'POST' });
-      } catch (error) {
-        console.error('Error closing connection:', error);
-      } finally {
-        clientRef.current.destroy();
+        clientRef.current.destroy(); // Destroy the client only if it exists
         setConnectionClosed(true);
         router.push('/');
+      } catch (error) {
+        console.error('Error closing connection:', error);
       }
     }
   };
@@ -144,7 +143,6 @@ export default function Receive() {
         </a>
       )}
 
-      {/* Show Close Connection button immediately after starting to download */}
       {downloading && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
