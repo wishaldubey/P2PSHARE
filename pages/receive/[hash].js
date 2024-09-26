@@ -131,8 +131,8 @@ export default function Receive() {
               style={{
                 left: `${progress}%`,
                 transform: 'translate(-50%, -50%)', // Center the GIF
-                width: '50px', // Adjust size as needed
-                height: '50px', // Adjust size as needed
+                width: '70px', // Adjust size as needed
+                height: '70px', // Adjust size as needed
               }}
             />
             <div
