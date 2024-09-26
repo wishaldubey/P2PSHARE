@@ -79,7 +79,7 @@ export default function Receive() {
           return;
         }
         setFileUrl(url);
-        setDownloading(false);
+        setDownloading(false); // Set downloading to false once done
       });
     });
 
@@ -93,7 +93,7 @@ export default function Receive() {
     if (clientRef.current) {
       clientRef.current.destroy(); // Close the WebTorrent client
       setConnectionClosed(true);
-      fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });  // Notify the server to close sender connection
+      fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' }); // Notify the server to close sender connection
       setTimeout(() => {
         router.push('/'); // Redirect to home page after a delay to ensure closure
       }, 2000);
@@ -138,7 +138,8 @@ export default function Receive() {
         </a>
       )}
 
-      {!downloading && fileUrl && !connectionClosed && (
+      {/* Ensure the Close Connection button is visible when not downloading and fileUrl is available */}
+      {fileUrl && !downloading && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
           className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
@@ -152,4 +153,4 @@ export default function Receive() {
       )}
     </div>
   );
-}
+          }
