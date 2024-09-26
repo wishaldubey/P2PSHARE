@@ -69,7 +69,6 @@ export default function Receive() {
       setSpeed(torrent.downloadSpeed / 1024);
       setDownloading(true);
 
-      // Debugging logs to trace download progress
       console.log('Downloading:', { downloaded, total, progressPercentage });
     });
 
@@ -84,6 +83,13 @@ export default function Receive() {
         setFileUrl(url);
         setDownloading(false); // Set downloading to false once done
         console.log('Download complete:', url); // Log download complete
+
+        // Check states right before rendering
+        console.log({
+          fileUrl,
+          downloading,
+          connectionClosed,
+        });
       });
     });
 
@@ -103,6 +109,13 @@ export default function Receive() {
       }, 2000);
     }
   };
+
+  // Add more console logs to monitor rendering conditions
+  console.log({
+    fileUrl,
+    downloading,
+    connectionClosed,
+  });
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
@@ -157,4 +170,4 @@ export default function Receive() {
       )}
     </div>
   );
-        }
+}
