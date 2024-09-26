@@ -48,7 +48,6 @@ export default function Receive() {
     const torrent = client.add(hash, {
       announce: [
         'wss://tracker.openwebtorrent.com',
-        // Consider changing these if issues persist
         'wss://tracker.fastcast.nz',
         'wss://tracker.webtorrent.io',
         'wss://tracker.sloppyta.co',
@@ -91,18 +90,12 @@ export default function Receive() {
     });
   };
 
-  const handleCloseConnection = async () => {
-    if (clientRef.current && !connectionClosed) {
-      try {
-        await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });
-        await fetch(`/api/notify-sender-to-close?hash=${hash}`, { method: 'POST' });
-        clientRef.current.destroy(); // Destroy the client only if it exists
-        setConnectionClosed(true);
-        router.push('/');
-      } catch (error) {
-        console.error('Error closing connection:', error);
-      }
+  const handleCloseConnection = () => {
+    if (clientRef.current) {
+      clientRef.current.destroy(); // Clean up the client
     }
+    setConnectionClosed(true);
+    router.push('https://wishare.vercel.app'); // Redirect to the homepage
   };
 
   return (
@@ -143,7 +136,8 @@ export default function Receive() {
         </a>
       )}
 
-      {downloading && !connectionClosed && (
+      {/* Show close connection button as soon as connection is established/downloading starts */}
+      {(downloading || connectionStatus) && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
           className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
