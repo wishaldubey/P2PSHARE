@@ -68,6 +68,9 @@ export default function Receive() {
       setProgress(progressPercentage);
       setSpeed(torrent.downloadSpeed / 1024);
       setDownloading(true);
+
+      // Debugging logs to trace download progress
+      console.log('Downloading:', { downloaded, total, progressPercentage });
     });
 
     torrent.on('done', () => {
@@ -80,6 +83,7 @@ export default function Receive() {
         }
         setFileUrl(url);
         setDownloading(false); // Set downloading to false once done
+        console.log('Download complete:', url); // Log download complete
       });
     });
 
@@ -139,7 +143,7 @@ export default function Receive() {
       )}
 
       {/* Ensure the Close Connection button is visible when not downloading and fileUrl is available */}
-      {fileUrl && !downloading && !connectionClosed && (
+      {!downloading && fileUrl && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
           className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
@@ -153,4 +157,4 @@ export default function Receive() {
       )}
     </div>
   );
-          }
+        }
