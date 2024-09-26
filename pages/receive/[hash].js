@@ -9,7 +9,6 @@ export default function Receive() {
   const [fileName, setFileName] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
   const [connectionClosed, setConnectionClosed] = useState(false);
-  const [isClosing, setIsClosing] = useState(false); // State to track closing status
   const clientRef = useRef(null);
   const router = useRouter();
   const { hash } = router.query;
@@ -36,7 +35,6 @@ export default function Receive() {
     return () => {
       if (clientRef.current) {
         clientRef.current.destroy();
-        clientRef.current = null; // Avoid calling destroy on an already destroyed client
       }
     };
   }, [hash]);
@@ -70,7 +68,6 @@ export default function Receive() {
       setProgress(progressPercentage);
       setSpeed(torrent.downloadSpeed / 1024);
       setDownloading(true);
-      console.log(`Downloading: ${progressPercentage.toFixed(2)}% at ${speed.toFixed(2)} KB/s`); // Debug log
     });
 
     torrent.on('done', () => {
@@ -83,7 +80,6 @@ export default function Receive() {
         }
         setFileUrl(url);
         setDownloading(false);
-        console.log('Download complete:', url); // Debug log
       });
     });
 
@@ -94,16 +90,16 @@ export default function Receive() {
   };
 
   const handleCloseConnection = async () => {
-    if (clientRef.current && !isClosing) {
-      setIsClosing(true); // Prevent multiple calls
+    if (clientRef.current) {
       try {
+        await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' }); // Notify the server to close sender connection
         clientRef.current.destroy(); // Close the WebTorrent client
         setConnectionClosed(true);
-        await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' }); // Ensure this matches your server's expectations
-        router.push('/'); // Redirect to home page after closure
+        setTimeout(() => {
+          router.push('/'); // Redirect to home page after a delay to ensure closure
+        }, 2000);
       } catch (error) {
         console.error('Error closing connection:', error);
-        setIsClosing(false); // Reset closing status on error
       }
     }
   };
@@ -146,14 +142,12 @@ export default function Receive() {
         </a>
       )}
 
-      {/* Close Connection Button Logic */}
-      {(!downloading && fileUrl) && !connectionClosed && (
+      {!downloading && fileUrl && !connectionClosed && (
         <button
           onClick={handleCloseConnection}
           className="bg-red-500 text-white px-4 py-2 mt-4 rounded-md hover:bg-red-600"
-          disabled={isClosing} // Disable button while closing
         >
-          {isClosing ? 'Closing...' : 'Close Connection'}
+          Close Connection
         </button>
       )}
 
@@ -162,4 +156,4 @@ export default function Receive() {
       )}
     </div>
   );
-}
+            }
