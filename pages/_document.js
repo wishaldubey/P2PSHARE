@@ -5,6 +5,7 @@ export default function Document() {
     <Html lang="en">
       <Head>
      <meta name="google-site-verification" content="78IKF1o38uymg2UfKIzqDaJX9aoc9cxWEhnRjhJHsKo" />
+    <meta name="msvalidate.01" content="CD37CB6FC57962A460A72499700C0659" />
         {/* Basic Meta Tags */}
         <meta name="description" content="ViShare - Share files securely and quickly via peer-to-peer connections" />
         <link rel="icon" href="/favicon.ico" />
