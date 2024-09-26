@@ -14,7 +14,7 @@ export default function Receive() {
   const { hash } = router.query;
 
   // Replace this with the path to your GIF or the URL
-  const amongUsGif = '/path/to/among-us.gif'; // Replace with your GIF path
+  const amongUsGif = '/images/among-us.gif'; // Replace with your GIF path
 
   useEffect(() => {
     if (!hash) return;
