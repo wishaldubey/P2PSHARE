@@ -7,6 +7,7 @@ export default function Home() {
   const [seeding, setSeeding] = useState(false);
   const [progress, setProgress] = useState(0);
   const [speed, setSpeed] = useState(0);
+  const [copyMessage, setCopyMessage] = useState(''); // New state for copy message
   const clientRef = useRef(null);
 
   useEffect(() => {
@@ -76,7 +77,8 @@ export default function Home() {
   // Function to copy link to clipboard
   const copyToClipboard = () => {
     navigator.clipboard.writeText(fileLink);
-    alert("Link copied to clipboard!");
+    setCopyMessage('Copied!'); // Set copy message
+    setTimeout(() => setCopyMessage(''), 2000); // Clear message after 2 seconds
   };
 
   const handleCloseConnection = () => {
@@ -113,6 +115,9 @@ export default function Home() {
           >
             Copy Link
           </button>
+          {copyMessage && ( // Display copy message
+            <p className="text-green-400 mt-2">{copyMessage}</p>
+          )}
         </div>
       )}
 
