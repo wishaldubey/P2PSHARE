@@ -8,7 +8,7 @@ export default function Receive() {
   const [speed, setSpeed] = useState(0);
   const [fileName, setFileName] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
-  const [connectionClosed, setConnectionClosed] = useState(false); // New state for closed connection
+  const [connectionClosed, setConnectionClosed] = useState(false);
   const clientRef = useRef(null);
   const router = useRouter();
   const { hash } = router.query;
@@ -94,7 +94,9 @@ export default function Receive() {
       clientRef.current.destroy(); // Close the WebTorrent client
       setConnectionClosed(true);
       fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });  // Notify the server to close sender connection
-      router.push('/'); // Redirect to home page
+      setTimeout(() => {
+        router.push('/'); // Redirect to home page after a delay to ensure closure
+      }, 2000);
     }
   };
 
@@ -150,4 +152,4 @@ export default function Receive() {
       )}
     </div>
   );
-            }
+}
