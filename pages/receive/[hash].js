@@ -88,9 +88,21 @@ export default function Receive() {
     });
   };
 
-  const handleCloseConnection = () => {
-    // Simply redirect without destroying the client
-    router.push('https://wishare.vercel.app'); // Redirect to the homepage
+  const handleCloseConnection = async () => {
+    try {
+      // Notify the sender to close the connection
+      await fetch('/api/notify-sender-to-close', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ hash }),
+      });
+      // Redirect receiver to the homepage
+      router.push('https://wishare.vercel.app'); // Redirect to the homepage
+    } catch (error) {
+      console.error('Error notifying sender:', error);
+    }
   };
 
   return (
