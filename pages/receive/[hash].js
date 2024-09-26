@@ -99,7 +99,7 @@ export default function Receive() {
         body: JSON.stringify({ hash }),
       });
       // Redirect receiver to the homepage
-      router.push('https://wishare.vercel.app'); // Redirect to the homepage
+      router.push('https://vishare.vercel.app'); // Redirect to the homepage
     } catch (error) {
       console.error('Error notifying sender:', error);
     }
