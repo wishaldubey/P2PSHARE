@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 export default function Receive() {
   const [fileUrl, setFileUrl] = useState(null);
-  const [downloading, setDownloading] = useState(false); // Initially false, updated when connection starts
+  const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [fileName, setFileName] = useState(null);
@@ -14,7 +14,8 @@ export default function Receive() {
   const { hash } = router.query;
 
   useEffect(() => {
-    if (!hash) return; // Early return if hash is not available
+    if (!hash) return;
+    
     const loadWebTorrent = () => {
       if (window.WebTorrent) {
         clientRef.current = new window.WebTorrent();
@@ -47,7 +48,7 @@ export default function Receive() {
     const torrent = client.add(hash, {
       announce: [
         'wss://tracker.openwebtorrent.com',
-        'wss://tracker.btorrent.xyz',
+        'wss://tracker.btorrent.xyz', // Consider removing if problematic
         'wss://tracker.fastcast.nz',
         'wss://tracker.webtorrent.io',
         'wss://tracker.sloppyta.co',
@@ -68,7 +69,7 @@ export default function Receive() {
       const progressPercentage = (downloaded / total) * 100;
       setProgress(progressPercentage);
       setSpeed(torrent.downloadSpeed / 1024);
-      setDownloading(true); // Set downloading to true when download starts
+      setDownloading(true);
     });
 
     torrent.on('done', () => {
@@ -80,7 +81,7 @@ export default function Receive() {
           return;
         }
         setFileUrl(url);
-        setDownloading(false); // Set downloading to false once done
+        setDownloading(false);
       });
     });
 
@@ -91,20 +92,17 @@ export default function Receive() {
   };
 
   const handleCloseConnection = async () => {
-    if (clientRef.current) {
-      clientRef.current.destroy(); // Close the WebTorrent client
-      setConnectionClosed(true);
-
-      // Notify the server to close the sender connection
+    if (clientRef.current && !connectionClosed) {
       try {
         await fetch(`/api/close-torrent?hash=${hash}`, { method: 'POST' });
         await fetch(`/api/notify-sender-to-close?hash=${hash}`, { method: 'POST' });
       } catch (error) {
         console.error('Error closing connection:', error);
+      } finally {
+        clientRef.current.destroy();
+        setConnectionClosed(true);
+        router.push('/');
       }
-
-      // Redirect to home page immediately after closing connection
-      router.push('/');
     }
   };
 
@@ -161,4 +159,4 @@ export default function Receive() {
       )}
     </div>
   );
-    }
+}
