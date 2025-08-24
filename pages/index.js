@@ -92,6 +92,8 @@ export default function Home() {
 
     setSeeding(true);
     setIsSharing(true);
+    setProgress(0);
+    setSpeed(0);
 
     client.seed(file, { announce: [
       'wss://tracker.openwebtorrent.com',
@@ -101,12 +103,20 @@ export default function Home() {
       'wss://tracker.sloppyta.co',
       'wss://tracker.novage.com.ua'
     ]}, async (torrent) => {
+      // Set initial progress
+      setProgress(10);
+      
       await createShortLink(torrent.infoHash, 'file');
+      
+      // Mark as ready for sharing
+      setProgress(100);
+      setSeeding(false);
+      setIsSharing(false);
 
       torrent.on('upload', () => {
         const total = torrent.length;
         const uploaded = torrent.uploaded;
-        const progressPercentage = (uploaded / total) * 100;
+        const progressPercentage = Math.min(100, (uploaded / total) * 100);
         setProgress(progressPercentage);
         setSpeed(torrent.uploadSpeed / 1024);
       });
@@ -169,53 +179,54 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-yellow-300 text-black font-mono">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-6xl font-black mb-4 text-black transform -rotate-1 inline-block bg-red-500 px-6 py-2 border-4 border-black shadow-[8px_8px_0px_0px_#000]">
+          <div className="text-center mb-4 sm:mb-8">
+            <h1 className="text-3xl sm:text-6xl font-black mb-2 sm:mb-4 text-black transform -rotate-1 inline-block bg-red-500 px-3 sm:px-6 py-1 sm:py-2 border-4 border-black shadow-[4px_4px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000]">
               VISHARE
             </h1>
-            <p className="text-2xl font-bold bg-white px-4 py-2 border-4 border-black shadow-[4px_4px_0px_0px_#000] inline-block transform rotate-1">
+            <p className="text-sm sm:text-2xl font-bold bg-white px-2 sm:px-4 py-1 sm:py-2 border-4 border-black shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000] inline-block transform rotate-1">
               SHARE FILES & TEXT INSTANTLY!
             </p>
           </div>
 
           {/* Main Card */}
-          <div className="bg-white border-4 border-black shadow-[12px_12px_0px_0px_#000] p-8">
+          <div className="bg-white border-4 border-black shadow-[6px_6px_0px_0px_#000] sm:shadow-[12px_12px_0px_0px_#000] p-4 sm:p-8">
             {!shareLink ? (
               <>
                 {/* Tab Navigation */}
-                <div className="flex mb-8 gap-4">
+                <div className="flex mb-4 sm:mb-8 gap-2 sm:gap-4">
                   <button
                     onClick={() => setActiveTab('file')}
-                    className={`flex-1 py-4 px-6 font-black text-xl border-4 border-black transform transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${
+                    className={`flex-1 py-2 sm:py-4 px-2 sm:px-6 font-black text-sm sm:text-xl border-4 border-black transform transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${
                       activeTab === 'file'
-                        ? 'bg-blue-500 text-white shadow-[6px_6px_0px_0px_#000] -translate-x-1 -translate-y-1'
-                        : 'bg-pink-400 text-black shadow-[6px_6px_0px_0px_#000]'
+                        ? 'bg-blue-500 text-white shadow-[3px_3px_0px_0px_#000] sm:shadow-[6px_6px_0px_0px_#000] -translate-x-1 -translate-y-1'
+                        : 'bg-pink-400 text-black shadow-[3px_3px_0px_0px_#000] sm:shadow-[6px_6px_0px_0px_#000]'
                     }`}
                   >
-                    <span className="text-3xl mr-2">📁</span>
-                    FILES
+                    <span className="text-lg sm:text-3xl mr-1 sm:mr-2">📁</span>
+                    <span className="hidden sm:inline">FILES</span>
+                    <span className="sm:hidden">FILE</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('text')}
-                    className={`flex-1 py-4 px-6 font-black text-xl border-4 border-black transform transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${
+                    className={`flex-1 py-2 sm:py-4 px-2 sm:px-6 font-black text-sm sm:text-xl border-4 border-black transform transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${
                       activeTab === 'text'
-                        ? 'bg-blue-500 text-white shadow-[6px_6px_0px_0px_#000] -translate-x-1 -translate-y-1'
-                        : 'bg-pink-400 text-black shadow-[6px_6px_0px_0px_#000]'
+                        ? 'bg-blue-500 text-white shadow-[3px_3px_0px_0px_#000] sm:shadow-[6px_6px_0px_0px_#000] -translate-x-1 -translate-y-1'
+                        : 'bg-pink-400 text-black shadow-[3px_3px_0px_0px_#000] sm:shadow-[6px_6px_0px_0px_#000]'
                     }`}
                   >
-                    <span className="text-3xl mr-2">📝</span>
+                    <span className="text-lg sm:text-3xl mr-1 sm:mr-2">📝</span>
                     TEXT
                   </button>
                 </div>
 
                 {/* File Sharing Tab */}
                 {activeTab === 'file' && (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     <div className="text-center">
-                      <div className="border-4 border-black border-dashed bg-cyan-200 p-12 hover:bg-cyan-300 transition-colors shadow-[8px_8px_0px_0px_#000] transform hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0px_0px_#000]">
+                      <div className="border-4 border-black border-dashed bg-cyan-200 p-6 sm:p-12 hover:bg-cyan-300 transition-colors shadow-[4px_4px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] transform hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#000] sm:hover:shadow-[4px_4px_0px_0px_#000]">
                         <input
                           type="file"
                           onChange={handleFileChange}
@@ -227,11 +238,11 @@ export default function Home() {
                           htmlFor="file-input"
                           className="cursor-pointer flex flex-col items-center"
                         >
-                          <div className="text-8xl mb-4">📁</div>
-                          <p className="text-2xl font-black mb-2 text-black">
+                          <div className="text-4xl sm:text-8xl mb-2 sm:mb-4">📁</div>
+                          <p className="text-sm sm:text-2xl font-black mb-1 sm:mb-2 text-black text-center break-words">
                             {file ? file.name.toUpperCase() : 'DROP YOUR FILE HERE!'}
                           </p>
-                          <p className="text-lg font-bold text-black">
+                          <p className="text-xs sm:text-lg font-bold text-black text-center">
                             CLICK TO BROWSE OR DRAG & DROP
                           </p>
                         </label>
@@ -242,23 +253,23 @@ export default function Home() {
 
                 {/* Text Sharing Tab */}
                 {activeTab === 'text' && (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     <div>
-                      <label className="block text-2xl font-black mb-4 text-black bg-yellow-400 px-4 py-2 border-4 border-black shadow-[4px_4px_0px_0px_#000] inline-block transform -rotate-1">
+                      <label className="block text-sm sm:text-2xl font-black mb-2 sm:mb-4 text-black bg-yellow-400 px-2 sm:px-4 py-1 sm:py-2 border-4 border-black shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000] inline-block transform -rotate-1">
                         TYPE YOUR TEXT HERE!
                       </label>
                       <textarea
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         placeholder="PASTE YOUR TEXT HERE AND SHARE IT WITH THE WORLD!"
-                        className="w-full h-40 p-4 bg-lime-200 border-4 border-black text-black placeholder-gray-700 focus:outline-none focus:bg-lime-300 resize-none font-mono text-lg font-bold shadow-[6px_6px_0px_0px_#000]"
+                        className="w-full h-32 sm:h-40 p-2 sm:p-4 bg-lime-200 border-4 border-black text-black placeholder-gray-700 focus:outline-none focus:bg-lime-300 resize-none font-mono text-sm sm:text-lg font-bold shadow-[3px_3px_0px_0px_#000] sm:shadow-[6px_6px_0px_0px_#000]"
                         disabled={isSharing}
                       />
                     </div>
                     <button
                       onClick={handleTextShare}
                       disabled={!text.trim() || isSharing}
-                      className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-black font-black py-6 px-6 border-4 border-black shadow-[8px_8px_0px_0px_#000] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0px_0px_#000] disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[8px_8px_0px_0px_#000] disabled:cursor-not-allowed text-2xl"
+                      className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-black font-black py-3 sm:py-6 px-4 sm:px-6 border-4 border-black shadow-[4px_4px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#000] sm:hover:shadow-[4px_4px_0px_0px_#000] disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[4px_4px_0px_0px_#000] sm:disabled:shadow-[8px_8px_0px_0px_#000] disabled:cursor-not-allowed text-lg sm:text-2xl"
                     >
                       {isSharing ? 'CREATING LINK...' : 'SHARE THIS TEXT!'}
                     </button>
@@ -267,78 +278,78 @@ export default function Home() {
 
                 {/* Progress for file upload */}
                 {seeding && (
-                  <div className="mt-8 space-y-4">
+                  <div className="mt-4 sm:mt-8 space-y-3 sm:space-y-4">
                     <div className="text-center">
-                      <p className="text-2xl font-black bg-orange-400 px-4 py-2 border-4 border-black shadow-[4px_4px_0px_0px_#000] inline-block transform rotate-1">
+                      <p className="text-sm sm:text-2xl font-black bg-orange-400 px-2 sm:px-4 py-1 sm:py-2 border-4 border-black shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000] inline-block transform rotate-1">
                         PREPARING FILE...
                       </p>
                     </div>
-                    <div className="w-full bg-gray-300 border-4 border-black h-8 shadow-[4px_4px_0px_0px_#000]">
+                    <div className="w-full bg-gray-300 border-4 border-black h-6 sm:h-8 shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000]">
                       <div
                         className="bg-red-500 h-full border-r-4 border-black transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <div className="flex justify-between text-lg font-black">
-                      <span className="bg-white px-2 py-1 border-2 border-black">{progress.toFixed(1)}% UPLOADED</span>
-                      <span className="bg-white px-2 py-1 border-2 border-black">{speed.toFixed(1)} KB/s</span>
+                    <div className="flex justify-between text-sm sm:text-lg font-black gap-2">
+                      <span className="bg-white px-1 sm:px-2 py-1 border-2 border-black text-xs sm:text-base">{progress.toFixed(1)}% UPLOADED</span>
+                      <span className="bg-white px-1 sm:px-2 py-1 border-2 border-black text-xs sm:text-base">{speed.toFixed(1)} KB/s</span>
                     </div>
                   </div>
                 )}
               </>
             ) : (
               /* Share Results */
-              <div className="text-center space-y-8">
-                <div className="text-8xl mb-4 transform rotate-12">🎉</div>
-                <h2 className="text-4xl font-black bg-green-400 px-6 py-3 border-4 border-black shadow-[8px_8px_0px_0px_#000] inline-block transform -rotate-2">
+              <div className="text-center space-y-4 sm:space-y-8">
+                <div className="text-4xl sm:text-8xl mb-2 sm:mb-4 transform rotate-12">🎉</div>
+                <h2 className="text-2xl sm:text-4xl font-black bg-green-400 px-3 sm:px-6 py-2 sm:py-3 border-4 border-black shadow-[4px_4px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] inline-block transform -rotate-2">
                   LINK CREATED!
                 </h2>
                 
                 {/* QR Code */}
                 {qrCodeUrl && (
                   <div className="flex justify-center">
-                    <div className="bg-white p-6 border-4 border-black shadow-[8px_8px_0px_0px_#000] transform rotate-3">
-                      <img src={qrCodeUrl} alt="QR Code" className="mx-auto" />
-                      <p className="text-black font-black text-lg mt-2">SCAN ME!</p>
+                    <div className="bg-white p-3 sm:p-6 border-4 border-black shadow-[4px_4px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] transform rotate-3">
+                      <img src={qrCodeUrl} alt="QR Code" className="mx-auto w-32 sm:w-auto" />
+                      <p className="text-black font-black text-sm sm:text-lg mt-1 sm:mt-2">SCAN ME!</p>
                     </div>
                   </div>
                 )}
 
                 {/* Share Link */}
-                <div className="bg-purple-300 p-6 border-4 border-black shadow-[8px_8px_0px_0px_#000] transform -rotate-1">
-                  <p className="text-xl font-black mb-4 text-black">YOUR SHARE LINK:</p>
-                  <div className="flex items-center gap-3">
+                <div className="bg-purple-300 p-3 sm:p-6 border-4 border-black shadow-[4px_4px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] transform -rotate-1">
+                  <p className="text-sm sm:text-xl font-black mb-2 sm:mb-4 text-black">YOUR SHARE LINK:</p>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                     <input
                       type="text"
                       value={shareLink}
                       readOnly
-                      className="flex-1 bg-white text-black p-4 border-4 border-black focus:outline-none font-mono text-lg font-bold"
+                      className="flex-1 bg-white text-black p-2 sm:p-4 border-4 border-black focus:outline-none font-mono text-xs sm:text-lg font-bold break-all"
                     />
                     <button
                       onClick={copyToClipboard}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-4 border-4 border-black shadow-[4px_4px_0px_0px_#000] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-none flex items-center gap-2 font-black"
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 sm:px-6 py-2 sm:py-4 border-4 border-black shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-none flex items-center justify-center gap-1 sm:gap-2 font-black text-sm sm:text-base"
                     >
-                      <span className="text-2xl">📋</span>
+                      <span className="text-lg sm:text-2xl">📋</span>
                       COPY
                     </button>
                   </div>
                   {copyMessage && (
-                    <p className="text-green-600 mt-3 text-xl font-black bg-white px-3 py-1 border-2 border-black inline-block">{copyMessage}</p>
+                    <p className="text-green-600 mt-2 sm:mt-3 text-sm sm:text-xl font-black bg-white px-2 sm:px-3 py-1 border-2 border-black inline-block">{copyMessage}</p>
                   )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-6 justify-center">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center">
                   <button
                     onClick={resetShare}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 border-4 border-black shadow-[6px_6px_0px_0px_#000] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0px_0px_#000] font-black text-xl"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 border-4 border-black shadow-[3px_3px_0px_0px_#000] sm:shadow-[6px_6px_0px_0px_#000] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_0px_#000] sm:hover:shadow-[3px_3px_0px_0px_#000] font-black text-lg sm:text-xl"
                   >
                     SHARE ANOTHER
                   </button>
                   {seeding && (
                     <button
                       onClick={handleCloseConnection}
-                      className="bg-red-500 hover:bg-red-600 text-white px-8 py-4 border-4 border-black shadow-[6px_6px_0px_0px_#000] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0px_0px_#000] font-black text-xl"
+                      className="bg-red-500 hover:bg-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 border-4 border-black shadow-[3px_3px_0px_0px_#000] sm:shadow-[6px_6px_0px_0px_#000] transition-all transform hover:translate-x-1 hover:translate-y-1 hover:shadow-[1px_1px_0px_0px_#000] sm:hover:shadow-[3px_3px_0px_0px_#000] font-black text-lg sm:text-xl"
                     >
                       STOP SHARING
                     </button>
