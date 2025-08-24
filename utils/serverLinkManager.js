@@ -1,40 +1,34 @@
-import fs from 'fs';
-import path from 'path';
+// Vercel-compatible in-memory storage with global persistence
+// Using global variables that persist across serverless function calls
 
-// File-based persistent storage for short links
-const STORAGE_FILE = path.join(process.cwd(), 'data', 'links.json');
-
-// Ensure data directory exists
-function ensureDataDir() {
-  const dataDir = path.dirname(STORAGE_FILE);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
+// Initialize global storage if it doesn't exist
+if (!global.linkStorage) {
+  global.linkStorage = {
+    linkMap: {},
+    reverseMap: {},
+    lastCleanup: Date.now()
+  };
 }
 
-// Load links from file
+// Load links from global storage
 function loadLinks() {
-  try {
-    ensureDataDir();
-    if (fs.existsSync(STORAGE_FILE)) {
-      const data = fs.readFileSync(STORAGE_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error('Error loading links:', error);
+  // Auto cleanup on load if it's been more than 1 hour since last cleanup
+  const now = Date.now();
+  if (now - global.linkStorage.lastCleanup > 60 * 60 * 1000) { // 1 hour
+    cleanupOldEntries();
+    global.linkStorage.lastCleanup = now;
   }
-  return { linkMap: {}, reverseMap: {} };
+  
+  return {
+    linkMap: global.linkStorage.linkMap,
+    reverseMap: global.linkStorage.reverseMap
+  };
 }
 
-// Save links to file
+// Save links to global storage
 function saveLinks(linkMap, reverseMap) {
-  try {
-    ensureDataDir();
-    const data = { linkMap, reverseMap };
-    fs.writeFileSync(STORAGE_FILE, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Error saving links:', error);
-  }
+  global.linkStorage.linkMap = linkMap;
+  global.linkStorage.reverseMap = reverseMap;
 }
 
 // Generate a random 4-5 character string

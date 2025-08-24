@@ -1,40 +1,44 @@
 import { createShortLink } from '../../utils/serverLinkManager';
-import fs from 'fs';
-import path from 'path';
 
-// File-based persistent storage for text shares
-const TEXT_STORAGE_FILE = path.join(process.cwd(), 'data', 'texts.json');
-
-// Ensure data directory exists
-function ensureDataDir() {
-  const dataDir = path.dirname(TEXT_STORAGE_FILE);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
+// Vercel-compatible in-memory storage for text shares
+// Initialize global storage if it doesn't exist
+if (!global.textStorage) {
+  global.textStorage = {
+    textShares: {},
+    lastCleanup: Date.now()
+  };
 }
 
-// Load texts from file
+// Load texts from global storage
 function loadTexts() {
-  try {
-    ensureDataDir();
-    if (fs.existsSync(TEXT_STORAGE_FILE)) {
-      const data = fs.readFileSync(TEXT_STORAGE_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error('Error loading texts:', error);
+  // Auto cleanup on load if it's been more than 1 hour since last cleanup
+  const now = Date.now();
+  if (now - global.textStorage.lastCleanup > 60 * 60 * 1000) { // 1 hour
+    cleanupOldTexts();
+    global.textStorage.lastCleanup = now;
   }
-  return {};
+  
+  return global.textStorage.textShares;
 }
 
-// Save texts to file
+// Save texts to global storage
 function saveTexts(textShares) {
-  try {
-    ensureDataDir();
-    fs.writeFileSync(TEXT_STORAGE_FILE, JSON.stringify(textShares, null, 2));
-  } catch (error) {
-    console.error('Error saving texts:', error);
+  global.textStorage.textShares = textShares;
+}
+
+// Clean up old texts
+function cleanupOldTexts() {
+  const textShares = global.textStorage.textShares;
+  const now = Date.now();
+  const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+  
+  for (const [id, data] of Object.entries(textShares)) {
+    if (now - data.createdAt > maxAge) {
+      delete textShares[id];
+    }
   }
+  
+  global.textStorage.textShares = textShares;
 }
 
 export default function handler(req, res) {
