@@ -11,10 +11,11 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.1.5",
-    "next": "14.2.13",
+    "next": "^14.2.32",
+    "next-sitemap": "^3.0.0",
+    "qrcode": "^1.5.3",
     "react": "^18",
     "react-dom": "^18",
-    "next-sitemap": "^3.0.0",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
