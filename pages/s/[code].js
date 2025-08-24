@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { getFullHash } from '../../utils/linkManager';
 
 export default function ShortLink() {
   const router = useRouter();
@@ -13,10 +12,11 @@ export default function ShortLink() {
 
     const handleRedirect = async () => {
       try {
-        const linkData = getFullHash(code);
+        const response = await fetch(`/api/resolve-link?code=${code}`);
+        const linkData = await response.json();
         
-        if (!linkData) {
-          setError('Link not found or expired');
+        if (!response.ok) {
+          setError(linkData.message || 'Link not found or expired');
           setLoading(false);
           return;
         }

@@ -1,7 +1,41 @@
-import { createShortLink } from '../../utils/linkManager';
+import { createShortLink } from '../../utils/serverLinkManager';
+import fs from 'fs';
+import path from 'path';
 
-// Simple in-memory storage for text shares
-const textShares = new Map();
+// File-based persistent storage for text shares
+const TEXT_STORAGE_FILE = path.join(process.cwd(), 'data', 'texts.json');
+
+// Ensure data directory exists
+function ensureDataDir() {
+  const dataDir = path.dirname(TEXT_STORAGE_FILE);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+}
+
+// Load texts from file
+function loadTexts() {
+  try {
+    ensureDataDir();
+    if (fs.existsSync(TEXT_STORAGE_FILE)) {
+      const data = fs.readFileSync(TEXT_STORAGE_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading texts:', error);
+  }
+  return {};
+}
+
+// Save texts to file
+function saveTexts(textShares) {
+  try {
+    ensureDataDir();
+    fs.writeFileSync(TEXT_STORAGE_FILE, JSON.stringify(textShares, null, 2));
+  } catch (error) {
+    console.error('Error saving texts:', error);
+  }
+}
 
 export default function handler(req, res) {
   if (req.method === 'POST') {
@@ -15,8 +49,12 @@ export default function handler(req, res) {
       // Create a unique ID for the text
       const textId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
       
-      // Store the text
-      textShares.set(textId, { text, createdAt: Date.now() });
+      // Load existing texts and add new one
+      const textShares = loadTexts();
+      textShares[textId] = { text, createdAt: Date.now() };
+      
+      // Save to file
+      saveTexts(textShares);
       
       // Create short link
       const shortCode = createShortLink(textId, 'text');
@@ -33,12 +71,28 @@ export default function handler(req, res) {
       return res.status(400).json({ message: 'Text ID is required' });
     }
 
-    const textData = textShares.get(id);
-    if (!textData) {
-      return res.status(404).json({ message: 'Text not found' });
-    }
+    try {
+      const textShares = loadTexts();
+      const textData = textShares[id];
+      
+      if (!textData) {
+        return res.status(404).json({ message: 'Text not found' });
+      }
 
-    res.status(200).json({ text: textData.text });
+      // Check if text hasn't expired (24 hours)
+      const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+      if (Date.now() - textData.createdAt > maxAge) {
+        // Text expired, clean it up
+        delete textShares[id];
+        saveTexts(textShares);
+        return res.status(404).json({ message: 'Text expired' });
+      }
+
+      res.status(200).json({ text: textData.text });
+    } catch (error) {
+      console.error('Error retrieving text:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   } else {
     res.status(405).json({ message: 'Method not allowed' });
   }

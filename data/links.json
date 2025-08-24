@@ -1,0 +1,24 @@
+{
+  "linkMap": {
+    "2cLL9": {
+      "hash": "dc374cd66a5de5e63b9b05ce63a9307808b048fc",
+      "type": "file",
+      "createdAt": 1756062574679
+    },
+    "m8kcb": {
+      "hash": "9216155e3b011722663a238d6931bf0fff613b9c",
+      "type": "file",
+      "createdAt": 1756062818199
+    },
+    "4g6gt": {
+      "hash": "1756062852203x8enry3s9",
+      "type": "text",
+      "createdAt": 1756062852207
+    }
+  },
+  "reverseMap": {
+    "dc374cd66a5de5e63b9b05ce63a9307808b048fc": "2cLL9",
+    "9216155e3b011722663a238d6931bf0fff613b9c": "m8kcb",
+    "1756062852203x8enry3s9": "4g6gt"
+  }
+}

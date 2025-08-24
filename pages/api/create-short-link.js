@@ -1,4 +1,4 @@
-import { createShortLink } from '../../utils/linkManager';
+import { createShortLink } from '../../utils/serverLinkManager';
 
 export default function handler(req, res) {
   if (req.method !== 'POST') {
